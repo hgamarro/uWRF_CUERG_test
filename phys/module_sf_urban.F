@@ -26,8 +26,6 @@ MODULE module_sf_urban
    REAL, ALLOCATABLE, DIMENSION(:) :: FRC_URB_TBL
 
    REAL, ALLOCATABLE, DIMENSION(:) :: COP_TBL
-   REAL, ALLOCATABLE, DIMENSION(:) :: BLDAC_FRC_TBL
-   REAL, ALLOCATABLE, DIMENSION(:) :: COOLED_FRC_TBL
    REAL, ALLOCATABLE, DIMENSION(:) :: PWIN_TBL
    REAL, ALLOCATABLE, DIMENSION(:) :: BETA_TBL
    INTEGER, ALLOCATABLE, DIMENSION(:) :: SW_COND_TBL
@@ -2103,10 +2101,6 @@ ENDIF
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating HPERCENT_BIN_TBL in urban_param_init')
             ALLOCATE( COP_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating COP_TBL in urban_param_init')
-            ALLOCATE( BLDAC_FRC_TBL(ICATE), stat=allocate_status )
-            if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating BLDAC_FRC_TBL in urban_param_init')
-            ALLOCATE( COOLED_FRC_TBL(ICATE), stat=allocate_status )
-            if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating COOLED_FRC_TBL in urban_param_init')
             ALLOCATE( PWIN_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating PWIN_TBL in urban_param_init')
             ALLOCATE( BETA_TBL(ICATE), stat=allocate_status )
@@ -2293,10 +2287,6 @@ ENDIF
          read(string(indx+1:),*) Z0R_tbl(1:icate)
       else if ( name == "COP") then
          read(string(indx+1:),*) cop_tbl(1:icate)
-      else if ( name == "BLDAC_FRC") then
-         read(string(indx+1:),*) bldac_frc_tbl(1:icate)
-      else if ( name == "COOLED_FRC") then
-         read(string(indx+1:),*) cooled_frc_tbl(1:icate)
       else if ( name == "PWIN") then
          read(string(indx+1:),*) pwin_tbl(1:icate)
       else if ( name == "BETA") then
@@ -2571,7 +2561,8 @@ ENDIF
                IF (HGT_URB2D(I,J)>0.) THEN
                   CONTINUE
                ELSE
-                  CALL wrf_debug(100, 'USING DEFAULT URBAN MORPHOLOGY')
+                  WRITE(mesg,*) 'USING DEFAULT URBAN MORPHOLOGY'
+                  call wrf_message(mesg)
                   LP_URB2D(I,J)=0.
                   LB_URB2D(I,J)=0.
                   HGT_URB2D(I,J)=0.
@@ -2605,7 +2596,8 @@ ENDIF
                IF (HGT_URB2D(I,J)>0.) THEN
                   CONTINUE
                ELSE
-                  CALL wrf_debug(100, 'USING DEFAULT URBAN MORPHOLOGY')
+                  WRITE(mesg,*) 'USING DEFAULT URBAN MORPHOLOGY'
+                  call wrf_message(mesg)
                   LP_URB2D(I,J)=0.
                   LB_URB2D(I,J)=0.
                   HGT_URB2D(I,J)=0.
@@ -2639,7 +2631,8 @@ ENDIF
               IF (HGT_URB2D(I,J)>0.) THEN
                   CONTINUE
                ELSE
-                  CALL wrf_debug(100, 'USING DEFAULT URBAN MORPHOLOGY')
+                  WRITE(mesg,*) 'USING DEFAULT URBAN MORPHOLOGY'
+                  call wrf_message(mesg)
                   LP_URB2D(I,J)=0.
                   LB_URB2D(I,J)=0.
                   HGT_URB2D(I,J)=0.
@@ -2673,7 +2666,8 @@ ENDIF
               IF (HGT_URB2D(I,J)>0.) THEN
                   CONTINUE
                ELSE
-                  CALL wrf_debug(100, 'USING DEFAULT URBAN MORPHOLOGY')
+                  WRITE(mesg,*) 'USING DEFAULT URBAN MORPHOLOGY'
+                  call wrf_message(mesg)
                   LP_URB2D(I,J)=0.
                   LB_URB2D(I,J)=0.
                   HGT_URB2D(I,J)=0.
