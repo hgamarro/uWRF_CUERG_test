@@ -288,6 +288,8 @@ MODULE module_sf_bep_bem
       real z_u(nz_um)         ! Height of the urban grid levels
 !FS
       real cop_u(nurbm)
+      real bldac_frc_u(nurbm)
+      real cooled_frc_u(nurbm)
       real pwin_u(nurbm)
       real beta_u(nurbm)
       integer sw_cond_u(nurbm)
@@ -388,6 +390,7 @@ MODULE module_sf_bep_bem
            albg_u,albw_u,albr_u,emg_u,emw_u,emr_u,                       &
            z0g_u,z0r_u, nd_u,strd_u,drst_u,ws_u,bs_u,h_b,d_b,ss_u,pb_u,  &
            nz_u,z_u,albwin_u,emwind_u,cop_u,pwin_u,beta_u,sw_cond_u,     &
+           bldac_frc_u,cooled_frc_u,                                     &
            time_on_u,time_off_u,targtemp_u,gaptemp_u,targhum_u,gaphum_u, &
            perflo_u,hsesf_u,hsequip 
 
@@ -401,7 +404,7 @@ MODULE module_sf_bep_bem
 ! 261-304
 !
 ! F. Salamanca and A. Martilli, 2009: 'A new Building Energy Model coupled 
-! with an Urban Canopy Parameterization for urban climate simulations—part II. 
+! with an Urban Canopy Parameterization for urban climate simulations-part II. 
 ! Validation with one dimension off-line simulations'. Theor Appl Climatol
 ! DOI 10.1007/s00704-009-0143-8 
 !------------------------------------------------------------------------
@@ -592,6 +595,7 @@ MODULE module_sf_bep_bem
                 twini_u,trini_u,tgini_u,albg_u,albw_u,albr_u,albwin_u,emg_u,emw_u,&
                 emr_u,emwind_u,z0g_u,z0r_u,nd_u,strd_u,drst_u,ws_u,bs_u,h_b,d_b,  &
                 cop_u,pwin_u,beta_u,sw_cond_u,time_on_u,time_off_u,targtemp_u,    &
+                bldac_frc_u,cooled_frc_u,                                         &
                 gaptemp_u,targhum_u,gaphum_u,perflo_u,hsesf_u,hsequip)
 
 !Initialisation of the urban parameters and calculation of the view factor
@@ -805,7 +809,7 @@ MODULE module_sf_bep_bem
                    rs_abs(ix,iy),emiss(ix,iy),grdflx_urb(ix,iy),    &
                    qv1D,tlev1D,qlev1D,sflev1D,lflev1D,consumlev1D,  &
                    sfvlev1D,lfvlev1D,twlev1D,tglev1D,tflev1D,sfwin1D,&
-                   ix,iy,lp_urb2d(ix,iy))                            
+                   ix,iy)                            
  
          do ibui=1,nbui_max !type of building
 	    do iz=1,nz_um   !vertical levels
@@ -896,6 +900,7 @@ MODULE module_sf_bep_bem
          meso_urb=(1./4.)*FRC_URB2D(ix,iy)/((bs_urb(1,iurb)+ws_urb(1,iurb))*bs_urb(2,iurb))+ &
                   (1./4.)*FRC_URB2D(ix,iy)/((bs_urb(2,iurb)+ws_urb(2,iurb))*bs_urb(1,iurb))
 
+         meso_urb= meso_urb*bldac_frc_u(iurb)*cooled_frc_u(iurb)   !! adjust for fraction AC
          
          ibui=0
          nlev=0
@@ -1001,7 +1006,7 @@ MODULE module_sf_bep_bem
                       b_u,b_v,b_t,b_ac,b_e,b_q,                        & 
                       dlg,dl_u,sf,vl,rl_up,rs_abs,emiss,grdflx_urb,    &
                       qv,tlev,qlev,sflev,lflev,consumlev,              &
-                      sfvlev,lfvlev,twlev,tglev,tflev,sfwin,ix,iy,lp_urb)                             
+                      sfvlev,lfvlev,twlev,tglev,tflev,sfwin,ix,iy)                             
 
 ! ----------------------------------------------------------------------
 ! This routine computes the effects of buildings on momentum, heat and
@@ -1228,7 +1233,6 @@ MODULE module_sf_bep_bem
       integer nt_int ! number of internal time step
       integer iz,id, it_int
       integer iw,ix,iy
-      real lp_urb  ! Building plan area density
 
 !---------------------------------------
 !New variables uses in BEM
@@ -1250,12 +1254,12 @@ MODULE module_sf_bep_bem
       real alaf(nf_u+1)     ! Floor thermal diffusivity at each wall layers [W/m K]     
       real alagb(ngb_u+1)   ! Ground thermal diffusivity below the building at each wall layer [W/m K] 
 
-      real sfrb(ndm,nbui_max)        ! Sensible heat flux from roofs [W/m²]
-      real gfrb(ndm,nbui_max)        ! Heat flux flowing inside the roofs [W/m²]
-      real sfwb1D(2*ndm,nz_um)    !Sensible heat flux from the walls [W/m²] 
-      real sfwin(2*ndm,nz_um,nbui_max)!Sensible heat flux from windows [W/m²]
-      real sfwinb1D(2*ndm,nz_um)  !Sensible heat flux from windows [W/m²]
-      real gfwb1D(2*ndm,nz_um)    !Heat flux flowing inside the walls [W/m²]
+      real sfrb(ndm,nbui_max)        ! Sensible heat flux from roofs [W/m2]
+      real gfrb(ndm,nbui_max)        ! Heat flux flowing inside the roofs [W/m2]
+      real sfwb1D(2*ndm,nz_um)    !Sensible heat flux from the walls [W/m2] 
+      real sfwin(2*ndm,nz_um,nbui_max)!Sensible heat flux from windows [W/m2]
+      real sfwinb1D(2*ndm,nz_um)  !Sensible heat flux from windows [W/m2]
+      real gfwb1D(2*ndm,nz_um)    !Heat flux flowing inside the walls [W/m2]
 
       real qlev(nz_um,nbui_max)      !specific humidity [kg/kg]
       real qlevb1D(nz_um)         !specific humidity [kg/kg] 
@@ -1273,8 +1277,6 @@ MODULE module_sf_bep_bem
       
       real sflev(nz_um,nz_um)     ! sensible heat flux due to the air conditioning systems [W]
       real lflev(nz_um,nz_um)     ! latent heat flux due to the air conditioning systems  [W]
-      real sfbui(nz_um)           ! sensible heat flux due to the air conditioning systems [W]
-      real lfbui(nz_um)           ! latent heat flux due to the air conditioning systems [W]
       real consumlev(nz_um,nz_um) ! consumption due to the air conditioning systems [W]
       real sflev1D(nz_um)         ! sensible heat flux due to the air conditioning systems [W]
       real lflev1D(nz_um)         ! latent heat flux due to the air conditioning systems  [W]
@@ -1361,7 +1363,7 @@ MODULE module_sf_bep_bem
        gfrb=0.     !Heat flux flowing inside the roof
        sfwb1D=0.   !Sensible heat flux from walls
        sfwinb1D=0. !Sensible heat flux from windows
-       gfwb1D=0.   !Heat flux flowing inside the walls[W/m²]
+       gfwb1D=0.   !Heat flux flowing inside the walls[W/m2]
 
 
        twb1D=0.    !Wall temperature
@@ -1615,8 +1617,9 @@ MODULE module_sf_bep_bem
 !
          sfrb(2,ibui)=sfrb(1,ibui)
          gfrb(2,ibui)=gfrb(1,ibui)
-!
-!End temporal modifications  
+
+
+!End temporal modifications
 !
          sfbui(ibui)=0
          lfbui(ibui)=0
@@ -1641,13 +1644,13 @@ MODULE module_sf_bep_bem
            if(iurb.eq.1.and.sfbui(ibui).gt.0) then
                call cooling_tower(ibui,nlev,tmp_u,pr_u,qv_u,sfbui,lfbui,sflev,lflev)
            endif
- 
+
            do id=1,ndm
               do ily=1,nwr_u
                  trb(id,ily,ibui)=trb1D(ily)
-              enddo   
+              enddo
               do ily=1,ngb_u
-                 tglev(id,ily,ibui)=tglevb1D(ily) 
+                 tglev(id,ily,ibui)=tglevb1D(ily)
               enddo
 
               do ily=1,nf_u
@@ -1655,7 +1658,7 @@ MODULE module_sf_bep_bem
                  tflev(id,ily,iz,ibui)=tflevb1D(ily,iz)
               enddo
               enddo
-           
+
 !!            do iz=1,nz_um
 !!               sfwin(2*id-1,iz,ibui)=sfwinb1D(2*id-1,iz)
 !!               sfwin(2*id,iz,ibui)=sfwinb1D(2*id,iz)
@@ -1673,10 +1676,10 @@ MODULE module_sf_bep_bem
                 twlev(2*id-1,iz,ibui)=twlevb1D(2*id-1,iz)
                 twlev(2*id,iz,ibui)=twlevb1D(2*id,iz)
              enddo
-           enddo       
+           enddo
 
-        enddo !ibui   
-        
+        enddo !ibui
+
 !-----------------------------------------------------------------------------
 !End loop over BEM -----------------------------------------------------------
 !-----------------------------------------------------------------------------
@@ -1719,7 +1722,7 @@ MODULE module_sf_bep_bem
                      pt_u,pt0_u,ptg,ptr,da_u,ptw,ptwin,pwin_u(iurb),drst,     &                      
                      uva_u,vva_u,uvb_u,vvb_u,tva_u,tvb_u,evb_u,qvb_u,qhb_u,   & 
                      uhb_u,vhb_u,thb_u,ehb_u,ss,dt,sfw,sfg,sfr,               &
-                     sfwin,pb,bs_u,dz_u,sflev,lflev,sfvlev,lfvlev,tvb_ac,lp_urb)  
+                     sfwin,pb,bs_u,dz_u,sflev,lflev,sfvlev,lfvlev,tvb_ac)  
       
 ! Calculation of the sensible heat fluxes for the ground, the wall and roof
 ! Sensible Heat Flux = density * Cp_U * ( A* potential temperature + B )
@@ -2279,7 +2282,7 @@ MODULE module_sf_bep_bem
                         drst,uva_u,vva_u,uvb_u,vvb_u,                &
                         tva_u,tvb_u,evb_u,qvb_u,qhb_u,               &
                         uhb_u,vhb_u,thb_u,ehb_u,ss,dt,sfw,sfg,sfr,   &
-                        sfwin,pb,bs_u,dz_u,sflev,lflev,sfvlev,lfvlev,tvb_ac,lp_urb)                  
+                        sfwin,pb,bs_u,dz_u,sflev,lflev,sfvlev,lfvlev,tvb_ac, lp_urb)                  
 
 ! ----------------------------------------------------------------------
 ! This routine computes the sources or sinks of the different quantities 
@@ -2427,10 +2430,10 @@ MODULE module_sf_bep_bem
         cdrag=3.32*(lp_urb)**0.47
         else
         cdrag=1.85
-        endif
+        endif        
  
          do ibui=1,nbui
-         do iz=1,nlev(ibui)
+         do iz=1,nlev(ibui)  
                    
             call flux_wall(ua_u(iz),va_u(iz),pt_u(iz),da_u(iz),             &  
                         ptw(2*id-1,iz,ibui),ptwin(2*id-1,iz,ibui),          &   
@@ -4223,11 +4226,11 @@ MODULE module_sf_bep_bem
       real rlw(2*ndm,nz_um)         ! Long wave radiation at the walls for a given canyon direction [W/m2]
       real rsg(ndm)                   ! Short wave radiation at the canyon for a given canyon direction [W/m2]
       real rlg(ndm)                   ! Long wave radiation at the ground for a given canyon direction [W/m2]
-      real rs                        ! Short wave radiation at the horizontal surface from the sun [W/m²]  
-      real sfw(2*ndm,nz_um)      ! Sensible heat flux from walls [W/m²]
-      real sfg(ndm)              ! Sensible heat flux from ground (road) [W/m²]
-      real sfr(ndm,nz_um)      ! Sensible heat flux from roofs [W/m²]                      
-      real rld                        ! Long wave radiation from the sky [W/m²]
+      real rs                        ! Short wave radiation at the horizontal surface from the sun [W/m2]  
+      real sfw(2*ndm,nz_um)      ! Sensible heat flux from walls [W/m2]
+      real sfg(ndm)              ! Sensible heat flux from ground (road) [W/m2]
+      real sfr(ndm,nz_um)      ! Sensible heat flux from roofs [W/m2]                      
+      real rld                        ! Long wave radiation from the sky [W/m2]
       real albg_u                    ! albedo of the ground/street
       real albw_u                    ! albedo of the walls
       real albr_u                    ! albedo of the roof 
@@ -4254,7 +4257,7 @@ MODULE module_sf_bep_bem
       real twlev(2*ndm,nz_um)   !Averaged Temperature of the windows 
       real pwin                 !Coverage area fraction of the windows
       real gflwin               !Heat stored for the windows
-      real sfwind(2*ndm,nz_um)  !Sensible heat flux from windows [W/m²]
+      real sfwind(2*ndm,nz_um)  !Sensible heat flux from windows [W/m2]
 
 !OUTPUT/INPUT
       real rs_abs  ! absrobed solar radiationfor this street direction
@@ -4693,7 +4696,8 @@ prr=0.01*pr_u(nlev(ibui))
       eso=6.11*(10**(tai*7.5/(237.7+tai)))
       qvos=0.622*eso/(prr-0.378*eso)
       rh=100*qvi/qvos
-      two=tai*atan(0.151977*((rh+8.313659)**0.5))+atan(tai+rh)-atan(rh-1.676331)+0.00391838*(rh**(1.5))*atan(0.023101*rh)-4.686035
+      two=tai*atan(0.151977*((rh+8.313659)**0.5))+atan(tai+rh)-atan(rh-1.676331)+0.00391838*(rh**(1.5))*atan(0.023101
+*rh)-4.686035
 
 !Heat Exchanger
 
@@ -4726,16 +4730,20 @@ tu=twi  !Upper temperature
 
   loop: do
 
-!a=taon*6.11*10**(7.5*taon/(237.7+taon))*(0.62197*cpw-cp*0.378) + 6.11*10**(7.5*taon/(237.7+taon))*(0.6197*latent+c*0.378) + taon*prr*cp - c*prr
+!a=taon*6.11*10**(7.5*taon/(237.7+taon))*(0.62197*cpw-cp*0.378) + 6.11*10**(7.5*taon/(237.7+taon))*(0.6197*latent+c*0
+.378) + taon*prr*cp - c*prr
 
 z=6.11*10**(7.5*taon/(237.7+taon))
 
 a=taon*z*(0.62197*cpw-cp*0.378) + z*(0.6197*latent+c*0.378) + taon*prr*cp - c*prr
 
 
-!b=(0.62197*cpw-cp*0.378)*6.11*(10**(7.5*taon/(237.7+taon))+taon*(10**(7.5*taon/(237.7+taon))*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2)))))+(6.11*(0.6197*latent+c*0.378))*(10**(7.5*taon/(237.7+taon))*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2))))+(prr*cp)
+!b=(0.62197*cpw-cp*0.378)*6.11*(10**(7.5*taon/(237.7+taon))+taon*(10**(7.5*taon/(237.7+taon))*2.3026*((7.5/(237.7+tao
+n))-(7.5*taon/((237.7+taon)**2)))))+(6.11*(0.6197*latent+c*0.378))*(10**(7.5*taon/(237.7+taon))*2.3026*((7.5/(237.7+t
+aon))-(7.5*taon/((237.7+taon)**2))))+(prr*cp)
 
-b=(0.62197*cpw-cp)*z+taon*((z/6.11*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2)))))+(6.11*(0.6197*latent+c))*(z/6.11*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2))))+(prr*cp)
+b=(0.62197*cpw-cp)*z+taon*((z/6.11*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2)))))+(6.11*(0.6197*latent+c)
+)*(z/6.11*2.3026*((7.5/(237.7+taon))-(7.5*taon/((237.7+taon)**2))))+(prr*cp)
 
 
 taon1=taon-a/b
@@ -4763,5 +4771,6 @@ qvo=0.62197*es/(prr-es*0.378)
       end subroutine
 !====================================================================72
 !====================================================================72
-END MODULE module_sf_bep_bem
 
+
+END MODULE module_sf_bep_bem
