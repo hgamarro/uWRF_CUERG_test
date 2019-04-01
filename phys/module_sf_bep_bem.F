@@ -6,7 +6,7 @@ MODULE module_sf_bep_bem
 
 ! SGClarke 09/11/2008
 ! Access urban_param.tbl values through calling urban_param_init in module_physics_init
-! for CASE (BEPSCHEME) select sf_urban_physics
+! for CASE (BEPSCHEME) select sf_urban_physics HGtest
 !
 ! -----------------------------------------------------------------------
 !  Dimension for the array used in the BEP module
