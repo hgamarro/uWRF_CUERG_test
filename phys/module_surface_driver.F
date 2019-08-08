@@ -8,7 +8,8 @@ CONTAINS
      &           acgrdflx,achfx,aclhf                                 &
      &          ,acsnom,acsnow,snowfallac,akhs,akms,albedo,br,canwat  &
      &          ,chklowq,dt,dx,dz8w,dzs,glw                           &
-     &          ,grdflx,gsw,swdown,gz1oz0,hfx,ht,ifsnow,isfflx        &
+     &          ,grdflx,gsw,swdown,gz1oz0,hfx,swddir,swddni,swddif    &
+     &          ,ht,ifsnow,isfflx                                     &
      &          ,fractional_seaice,seaice_albedo_opt                  &
      &          ,seaice_albedo_default,seaice_thickness_opt,          &
      &          seaice_thickness_default                              &
@@ -247,7 +248,7 @@ CONTAINS
      &          ,sfvent_urb3d,lfvent_urb3d                            & !multi-layer urban 
      &          ,sfwin1_urb3d,sfwin2_urb3d                            & !multi-layer urban       
      &          ,sfw1_urb3d,sfw2_urb3d,sfr_urb3d,sfg_urb3d            & !multi-layer urban
-     &          ,lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d                 & !multi-layer urban
+     &          ,lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,acd_urb2d       & !multi-layer urban
      &          ,mh_urb2d,stdh_urb2d,lf_urb2d                         &           
      &          ,a_u_bep,a_v_bep,a_t_bep,a_q_bep                      &
      &          ,b_u_bep,b_v_bep,b_t_bep,b_q_bep                      &
@@ -619,6 +620,9 @@ CONTAINS
    REAL, DIMENSION( ims:ime , 1:num_soil_layers, jms:jme ), INTENT(OUT)  ::   SMCREL
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   GLW
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(INOUT)::   GSW,SWDOWN
+   REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN)::    SWDDIR
+   REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN)::    SWDDNI
+   REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN)::    SWDDIF
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   HT
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   RAINCV
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(INOUT)::   SST
@@ -904,6 +908,7 @@ CONTAINS
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: lp_urb2d  !urban
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: lb_urb2d  !urban
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: hgt_urb2d !urban
+   REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: acd_urb2d !urban
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: mh_urb2d  !urban
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)  :: stdh_urb2d!urban
    REAL, OPTIONAL, DIMENSION( ims:ime, 4, jms:jme ), INTENT(IN)  :: lf_urb2d  !urban
@@ -2636,7 +2641,8 @@ CONTAINS
 !  END FASDAS
 !
                CALL lsm(dz8w,qv_curr,p8w,t_phy,tsk,                 &
-                hfx,qfx,lh,grdflx,qgh,gsw,swdown,glw,smstav,smstot,    &
+                hfx,qfx,lh,grdflx,qgh,gsw,swdown,glw,swddir,    &
+                swddni,swddif,smstav,smstot,                                  &
                 sfcrunoff,udrunoff,ivgtyp,isltyp,isurban,isice,vegfra,        &
                 albedo,albbck,znt,z0, tmn,xland,xice,emiss, embck,    &
                 snowc,qsfc,rainbl,                              &
@@ -2692,7 +2698,7 @@ CONTAINS
                 sfvent_urb3d,lfvent_urb3d,                      & !H multi-layer urban
                 sfwin1_urb3d,sfwin2_urb3d,                      & !H multi-layer urban
                 sfw1_urb3d,sfw2_urb3d,sfr_urb3d,sfg_urb3d,      & !H multi-layer urban
-                lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,           & !H multi-layer urban
+                lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,acd_urb2d, & !H multi-layer urban
                 mh_urb2d,stdh_urb2D,lf_urb2d,                   & !SLUCM
                 th_phy,rho,p_phy,ust,                           & !I multi-layer urban
                 gmt,julday,xlong,xlat,                          & !I multi-layer urban
@@ -2963,6 +2969,7 @@ CONTAINS
 	   call noahmp_urban (sf_urban_physics,     NUM_SOIL_LAYERS,     IVGTYP,ITIMESTEP,  & ! IN : Model configuration 
                                  DT,         COSZEN,     XLAT_URB2D,                        & ! IN : Time/Space-related
                               T_PHY,        QV_CURR,          U_PHY,      V_PHY,   SWDOWN,  & ! IN : Forcing
+                              SWDDIR,  SWDDNI, SWDDIF,                                    &
 		                GLW,            P8W,         RAINBL,       DZ8W,      ZNT,  & ! IN : Forcing
                                 TSK,            HFX,            QFX,         LH,   GRDFLX,  & ! IN/OUT : LSM 
 		             ALBEDO,          EMISS,           QSFC,                        & ! IN/OUT : LSM 
@@ -2998,7 +3005,7 @@ CONTAINS
                        sfvent_urb3d,   lfvent_urb3d,                                        & !H multi-layer urban
                        sfwin1_urb3d,   sfwin2_urb3d,                                        & !H multi-layer urban
                          sfw1_urb3d,     sfw2_urb3d,      sfr_urb3d,  sfg_urb3d,            & !H multi-layer urban
-                           lp_urb2d,       hi_urb2d,       lb_urb2d,  hgt_urb2d,            & !H multi-layer urban
+                           lp_urb2d,       hi_urb2d,       lb_urb2d,  hgt_urb2d, acd_urb2d, & !H multi-layer urban
                            mh_urb2d,     stdh_urb2d,       lf_urb2d,                        & !SLUCM
                              th_phy,            rho,          p_phy,        ust,            & !I multi-layer urban
                                 gmt,         julday,          xlong,       xlat,            & !I multi-layer urban

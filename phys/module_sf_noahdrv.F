@@ -29,7 +29,8 @@ CONTAINS
 ! Urban related variable are added to arguments - urban
 !----------------------------------------------------------------
    SUBROUTINE lsm(DZ8W,QV3D,P8W3D,T3D,TSK,                      &
-                  HFX,QFX,LH,GRDFLX, QGH,GSW,SWDOWN,GLW,SMSTAV,SMSTOT, &
+                  HFX,QFX,LH,GRDFLX, QGH,GSW,SWDOWN,GLW,SWDDIR,  &
+                  SWDDNI,SWDDIF,SMSTAV,SMSTOT,                  &
                   SFCRUNOFF, UDRUNOFF,IVGTYP,ISLTYP,ISURBAN,ISICE,VEGFRA,    &
                   ALBEDO,ALBBCK,ZNT,Z0,TMN,XLAND,XICE,EMISS,EMBCK,   &
                   SNOWC,QSFC,RAINBL,MMINLU,                     &
@@ -86,6 +87,7 @@ CONTAINS
                   sfwin1_urb3d,sfwin2_urb3d,                    & !H multi-layer urban
                   sfw1_urb3d,sfw2_urb3d,sfr_urb3d,sfg_urb3d,    & !H multi-layer urban
                   lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,         & !H multi-layer urban
+                  acd_urb2d,                                    & !H multi-layer urban
                   mh_urb2d,stdh_urb2d,lf_urb2d,                 & !SLUCM
                   th_phy,rho,p_phy,ust,                         & !I multi-layer urban
                   gmt,julday,xlong,xlat,                        & !I multi-layer urban
@@ -260,6 +262,9 @@ CONTAINS
                                                            GSW, &
                                                         SWDOWN, & !added 10 jan 2007
                                                            GLW, &
+                                                        SWDDIR, &
+                                                        SWDDNI, &
+                                                        SWDDIF, &
                                                         RAINBL, &
                                                         EMBCK,  &
                                                         SR
@@ -590,6 +595,7 @@ CONTAINS
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: lp_urb2d
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: lb_urb2d
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: hgt_urb2d
+   REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: acd_urb2d
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: mh_urb2d
    REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN) :: stdh_urb2d
    REAL, OPTIONAL, DIMENSION( ims:ime, 4, jms:jme ), INTENT(IN) :: lf_urb2d
@@ -1528,7 +1534,7 @@ CONTAINS
         
 
        CALL BEP_BEM(frc_urb2d,utype_urb2d,itimestep,dz8w,dt,u_phy,v_phy, &
-                th_phy,rho,p_phy,swdown,glw,                           &
+                th_phy,rho,p_phy,swdown,glw,swddir,swddni,swddif,      &
                 gmt,julday,xlong,xlat,declin_urb,cosz_urb2d,omg_urb2d, &
                 num_urban_layers,num_urban_hi,                         &
                 trb_urb4d,tw1_urb4d,tw2_urb4d,tgb_urb4d,               &
@@ -1537,7 +1543,7 @@ CONTAINS
                 cm_ac_urb3d,sfvent_urb3d,lfvent_urb3d,                 &
                 sfwin1_urb3d,sfwin2_urb3d,                             &
                 sfw1_urb3d,sfw2_urb3d,sfr_urb3d,sfg_urb3d,             &
-                lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,                  &
+                lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,acd_urb2d,        &
                 a_u_bep,a_v_bep,a_t_bep,                               &
                 a_e_bep,b_u_bep,b_v_bep,                               &
                 b_t_bep,b_e_bep,b_q_bep,dlg_bep,                       &

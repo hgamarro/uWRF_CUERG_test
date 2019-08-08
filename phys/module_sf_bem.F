@@ -34,7 +34,7 @@ MODULE module_sf_bem
      		       rhoout,tout,humout,press,                       &
      		       rs,rl,dzwal,cswal,kwal,pwin,cop,beta,sw_cond,   &
                        timeon,timeoff,targtemp,gaptemp,targhum,gaphum, &
-                       perflo,hsesf,hsequip,dzflo,                     &
+                   perflo,hsesf,hsequip,bldac_frc,cooled_frc,acd,dzflo, &
      		       csflo,kflo,dzgrd,csgrd,kgrd,dzrof,csrof,        &
      		       krof,tlev,shumlev,twal,twin,tflo,tgrd,trof,     &
      		       hsout,hlout,consump,hsvent,hlvent)
@@ -121,8 +121,12 @@ MODULE module_sf_bem
         real,    intent(in) :: gaphum   ! Comfort range of specific humidity
         real,    intent(in) :: perflo   ! Peak number of occupants per unit floor area
         real,    intent(in) :: hsesf    ! 
-        real,    intent(in) :: hsequip(24) ! 
+        real,    intent(in) :: hsequip(24) !
+
+        real,    intent(in) :: bldac_frc ! 
+        real,    intent(in) :: cooled_frc ! 
 	
+	real acd				!AC Distribution percentage
 	real cswal(nwal)		!Specific heat of the wall [J/(m3.K)] 
 	
 	real csflo(nflo)		!Specific heat of the floor [J/(m3.K)]
@@ -761,12 +765,12 @@ MODULE module_sf_bem
 !	
 	        
           call air_cond(hsneed(ilev),hlneed(ilev),dt, &
-                        hsout(ilev),hlout(ilev),consump(ilev), cop)
+                        hsout(ilev),hlout(ilev),consump(ilev),cop,bldac_frc,cooled_frc,acd)
     	         	
- 	  tlev(ilev)=tlev(ilev)+(dt/Qb)*(hslev(ilev)-hsneed(ilev))
+ 	  tlev(ilev)=tlev(ilev)+(dt/Qb)*(hslev(ilev)-hsneed(ilev)*bldac_frc*cooled_frc*acd)
           	  	  
 	  shumlev(ilev)=shumlev(ilev)+(dt/(vollev*rhoint*latent))* &
-                        (hllev(ilev)-hlneed(ilev))
+                        (hllev(ilev)-hlneed(ilev)*bldac_frc*cooled_frc*acd)
            
 	end do !ilev
         
@@ -2009,7 +2013,7 @@ MODULE module_sf_bem
 !====6=8==============================================================72
 !====6=8==============================================================72
          
-         subroutine air_cond(hsneed,hlneed,dt,hsout,hlout,consump,cop)
+         subroutine air_cond(hsneed,hlneed,dt,hsout,hlout,consump,cop,bldac_frc,cooled_frc,acd)
 
          implicit none
 
@@ -2018,6 +2022,9 @@ MODULE module_sf_bem
 !
 !INPUT/OUTPUT VARIABLES
          real, intent(in) :: cop
+         real, intent(in) :: bldac_frc
+         real, intent(in) :: cooled_frc
+         real, intent(in) :: acd
 !
 !INPUT/OUTPUT VARIABLES
 !       
@@ -2032,16 +2039,24 @@ MODULE module_sf_bem
          real hsout      !sensible heat pumped out into the atmosphere [W]
          real hlout      !latent heat pumped out into the atmosphere [W]
          real consump    !Electrical consumption of the air conditioning system [W] 
-                         
-    
+
+!LOCAL  VARIABLES
+!
+         integer hsneed_temp
+         integer hlneed_temp  
+                                   
 !
 !Performance of the air conditioning system
 !
+	  hsneed_temp=hsneed*bldac_frc*cooled_frc*acd
+	  hlneed_temp=hlneed*bldac_frc*cooled_frc*acd
+
+
          if (hsneed.gt.0) then         ! air conditioning is cooling 
                                        ! and the heat is pumped out into the atmosphere  
-	  hsout=(1/cop)*(abs(hsneed)+abs(hlneed))+hsneed
-          hlout=hlneed
-          consump=(1./cop)*(abs(hsneed)+abs(hlneed))
+	      hsout=(1/cop)*(abs(hsneed_temp)+abs(hlneed_temp))+hsneed_temp
+          hlout=hlneed_temp
+          consump=(1./cop)*(abs(hsneed_temp)+abs(hlneed_temp))
 !!        hsout=0.             
 !!        hlout=0.
 

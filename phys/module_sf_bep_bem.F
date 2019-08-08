@@ -6,8 +6,8 @@ MODULE module_sf_bep_bem
 
 ! SGClarke 09/11/2008
 ! Access urban_param.tbl values through calling urban_param_init in module_physics_init
-! for CASE (BEPSCHEME) select sf_urban_physics HGtest
-!
+! for CASE (BEPSCHEME) select sf_urban_physics
+! With CUERG changes - Harold
 ! -----------------------------------------------------------------------
 !  Dimension for the array used in the BEP module
 ! -----------------------------------------------------------------------
@@ -42,7 +42,7 @@ MODULE module_sf_bep_bem
 !Parameters of the windows. The glasses of windows are considered without films  -
 !Read the paper of J.Karlsson and A.Roos(2000):"modelling the angular behaviour  -
 !of the total solar energy transmittance of windows".Solar Energy Vol.69,No.4,   -
-!pp. 321-329, for more details.                                                  -
+!pp. 321-329, for more details.                                                -
 !---------------------------------------------------------------------------------
       integer p_num            !number of panes in the windows (1,2 or 3)
       parameter (p_num=2)
@@ -76,7 +76,7 @@ MODULE module_sf_bep_bem
    CONTAINS
  
       subroutine BEP_BEM(FRC_URB2D,UTYPE_URB2D,itimestep,dz8w,dt,u_phy,v_phy,      &
-                      th_phy,rho,p_phy,swdown,glw,                                 &
+                      th_phy,rho,p_phy,swdown,glw,swddir,swddni,swddif,            &
                       gmt,julday,xlong,xlat,                                       &
                       declin_urb,cosz_urb2d,omg_urb2d,                             &
                       num_urban_layers,num_urban_hi,                               &
@@ -86,7 +86,7 @@ MODULE module_sf_bep_bem
                       cm_ac_urb3d,sfvent_urb3d,lfvent_urb3d,                       &
                       sfwin1_urb3d,sfwin2_urb3d,                                   &
                       sfw1_urb3d,sfw2_urb3d,sfr_urb3d,sfg_urb3d,                   &
-                      lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,                        &
+                      lp_urb2d,hi_urb2d,lb_urb2d,hgt_urb2d,acd_urb2d,              &
                       a_u,a_v,a_t,a_e,b_u,b_v,                                     &
                       b_t,b_e,b_q,dlg,dl_u,sf,vl,                                  &
                       rl_up,rs_abs,emiss,grdflx_urb,qv_phy,                        &
@@ -116,6 +116,9 @@ MODULE module_sf_bep_bem
    REAL, DIMENSION( ims:ime, kms:kme, jms:jme )::   V
    REAL, DIMENSION( ims:ime , jms:jme )        ::   GLW
    REAL, DIMENSION( ims:ime , jms:jme )        ::   swdown
+   REAL, DIMENSION( ims:ime , jms:jme )        ::   swddif
+   REAL, DIMENSION( ims:ime , jms:jme )        ::   swddir
+   REAL, DIMENSION( ims:ime , jms:jme )        ::   swddni
    REAL, DIMENSION( ims:ime, jms:jme )         ::   UST
    INTEGER, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   UTYPE_URB2D
    REAL, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   FRC_URB2D
@@ -156,6 +159,7 @@ MODULE module_sf_bep_bem
    REAL, DIMENSION( ims:ime,jms:jme), INTENT(IN) :: lp_urb2d
    REAL, DIMENSION( ims:ime,jms:jme), INTENT(IN) :: lb_urb2d
    REAL, DIMENSION( ims:ime,jms:jme), INTENT(IN) :: hgt_urb2d
+   REAL, DIMENSION( ims:ime,jms:jme), INTENT(IN) :: acd_urb2d
 
    real z(ims:ime,kms:kme,jms:jme)            ! Vertical coordinates
    REAL, INTENT(IN )::   DT      ! Time step
@@ -317,6 +321,9 @@ MODULE module_sf_bep_bem
       real ah1D                    ! hour angle (it should come from the radiation routine)
       real rs1D                    ! solar radiation
       real rld1D                   ! downward flux of the longwave radiation
+      real rsdir1D                 ! dir component
+      real rsdni1D                 ! dni component 
+      real rsdif1D                 ! dif component
 
 
       real tw1D(2*ndm,nz_um,nwr_u,nbui_max) ! temperature in each layer of the wall
@@ -342,6 +349,7 @@ MODULE module_sf_bep_bem
       real sf_ac
       integer ibui,nbui
       integer nlev(nz_um)
+      real acd1D                    ! AC fraction 
 !
 !End new variables
 !
@@ -782,15 +790,25 @@ MODULE module_sf_bep_bem
 	 enddo
 	 enddo
          
+         acd1D=acd_urb2d(ix,iy)
          rs1D=swdown(ix,iy)
          rld1D=glw(ix,iy)
+
+         rsdir1D=swddir(ix,iy)
+         rsdni1D=swddni(ix,iy)
+         rsdif1D=swddif(ix,iy)
 
          zr1D=acos(COSZ_URB2D(ix,iy))
          deltar1D=DECLIN_URB
          ah1D=OMG_URB2D(ix,iy)
 
+         print*, 'AC_FAC', acd1D
+         print*, 'DIR', rsdir1D
+         print*, 'DNI', rsdni1D
+         print*, 'DIF', rsdif1D
+
          call BEP1D(iurb,kms,kme,kts,kte,z1D,dt,ua1D,va1D,pt1D,da1D,pr1D,pt01D,  &
-                   zr1D,deltar1D,ah1D,rs1D,rld1D,alagb,             & 
+                   zr1D,deltar1D,ah1D,rs1D,rld1D,acd1D,alagb,       & 
                    alag,alaw,alar,alaf,csgb,csg,csw,csr,csf,        & 
                    dzr,dzf,dzw,dzgb,                                &
                    albg_u(iurb),albw_u(iurb),albr_u(iurb),          &
@@ -801,7 +819,7 @@ MODULE module_sf_bep_bem
                    nzurban(iurb),z_u,cop_u,pwin_u,beta_u,           & 
                    sw_cond_u,time_on_u,time_off_u,targtemp_u,       &
                    gaptemp_u,targhum_u,gaphum_u,perflo_u,           &
-                   hsesf_u,hsequip,                                 &
+                   hsesf_u,hsequip,bldac_frc_u,cooled_frc_u,       &
                    tw1D,tg1D,tr1D,sfw1D,sfg1D,sfr1D,                & 
                    a_u1D,a_v1D,a_t1D,a_e1D,                         & 
                    b_u1D,b_v1D,b_t1D,b_ac1D,b_e1D,b_q1D,            & 
@@ -900,8 +918,7 @@ MODULE module_sf_bep_bem
          meso_urb=(1./4.)*FRC_URB2D(ix,iy)/((bs_urb(1,iurb)+ws_urb(1,iurb))*bs_urb(2,iurb))+ &
                   (1./4.)*FRC_URB2D(ix,iy)/((bs_urb(2,iurb)+ws_urb(2,iurb))*bs_urb(1,iurb))
 
-         meso_urb= meso_urb*bldac_frc_u(iurb)*cooled_frc_u(iurb)   !! adjust for fraction AC
-         
+                 
          ibui=0
          nlev=0
          nbui=0
@@ -980,10 +997,10 @@ MODULE module_sf_bep_bem
 
         time_bep=time_bep+dt
 
-      print*, 'ss_urb', ss_urb
-      print*, 'pb_urb', pb_urb
-      print*, 'nz_urb', nz_urb
-      print*, 'd_urb',  d_urb
+!      print*, 'ss_urb', ss_urb
+!      print*, 'pb_urb', pb_urb
+!      print*, 'nz_urb', nz_urb
+!      print*, 'd_urb',  d_urb
             
       return
       end subroutine BEP_BEM
@@ -991,7 +1008,7 @@ MODULE module_sf_bep_bem
 ! ===6=8===============================================================72
 
       subroutine BEP1D(iurb,kms,kme,kts,kte,z,dt,ua,va,pt,da,pr,pt0,   &  
-                      zr,deltar,ah,rs,rld,alagb,                       & 
+                      zr,deltar,ah,rs,rld,acd,alagb,                   & 
                       alag,alaw,alar,alaf,csgb,csg,csw,csr,csf,        & 
                       dzr,dzf,dzw,dzgb,                                &
                       albg,albw,albr,albwin,emg,emw,emr,               & 
@@ -1000,7 +1017,7 @@ MODULE module_sf_bep_bem
                       nzu,z_u,cop_u,pwin_u,beta_u,sw_cond_u,           & 
                       time_on_u,time_off_u,targtemp_u,                 &
                       gaptemp_u,targhum_u,gaphum_u,perflo_u,           &
-                      hsesf_u,hsequip,                                 &
+                      hsesf_u,hsequip,bldac_frc_u,cooled_frc_u,        &
                       tw,tg,tr,sfw,sfg,sfr,                            & 
                       a_u,a_v,a_t,a_e,                                 &
                       b_u,b_v,b_t,b_ac,b_e,b_q,                        & 
@@ -1072,6 +1089,7 @@ MODULE module_sf_bep_bem
       real ah                    ! Hour angle
       real rs                    ! Solar radiation
       real rld                   ! Downward flux of the longwave radiation
+      real acd                    ! AC Percentage from grid
 
 ! Data relative to the "urban grid"
 
@@ -1118,6 +1136,8 @@ MODULE module_sf_bep_bem
       real perflo_u(nurbm)
       real hsesf_u(nurbm)
       real hsequip(24)
+      real bldac_frc_u(nurbm)
+      real cooled_frc_u(nurbm)
 
 ! ----------------------------------------------------------------------
 ! INPUT-OUTPUT
@@ -1537,10 +1557,11 @@ MODULE module_sf_bep_bem
                    cop_u(iurb),beta_u(iurb),sw_cond_u(iurb),time_on_u(iurb), &
                    time_off_u(iurb),targtemp_u(iurb),gaptemp_u(iurb),        &
                    targhum_u(iurb),gaphum_u(iurb),perflo_u(iurb),            &
-                   hsesf_u(iurb),hsequip,                                    &
+                 hsesf_u(iurb),hsequip,bldac_frc_u(iurb),cooled_frc_u(iurb),acd, &
      	           dzf,csf,alaf,dzgb,csgb,alagb,dzr,csr,                     &
      	           alar,tlevb1D,qlevb1D,twb1D,twlevb1D,tflevb1D,tglevb1D,    &
      	           trb1D,sflev1D,lflev1D,consumlev1D,sfvlev1D,lfvlev1D)      
+
 
          !print*,'nz_um A',nz_um
          !print*,'nlev(ibui) A',nlev(ibui)

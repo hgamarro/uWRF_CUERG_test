@@ -1990,6 +1990,7 @@ END  SUBROUTINE EQSMOISTURE
   SUBROUTINE noahmp_urban(sf_urban_physics,   NSOIL,         IVGTYP,  ITIMESTEP,            & ! IN : Model configuration 
                                  DT,     COSZ_URB2D,     XLAT_URB2D,                        & ! IN : Time/Space-related
                                 T3D,           QV3D,          U_PHY,      V_PHY,   SWDOWN,  & ! IN : Forcing
+                                SWDDIR,  SWDDNI, SWDDIF,                                    &
 		                GLW,          P8W3D,         RAINBL,       DZ8W,      ZNT,  & ! IN : Forcing
                                 TSK,            HFX,            QFX,         LH,   GRDFLX,  & ! IN/OUT : LSM 
 		             ALBEDO,          EMISS,           QSFC,                        & ! IN/OUT : LSM 
@@ -2025,7 +2026,7 @@ END  SUBROUTINE EQSMOISTURE
                        sfvent_urb3d,   lfvent_urb3d,                                        & !H multi-layer urban
                        sfwin1_urb3d,   sfwin2_urb3d,                                        & !H multi-layer urban
                          sfw1_urb3d,     sfw2_urb3d,      sfr_urb3d,  sfg_urb3d,            & !H multi-layer urban
-                           lp_urb2d,       hi_urb2d,       lb_urb2d,  hgt_urb2d,            & !H multi-layer urban
+                           lp_urb2d,       hi_urb2d,       lb_urb2d,  hgt_urb2d, acd_urb2d, & !H multi-layer urban
                            mh_urb2d,     stdh_urb2d,       lf_urb2d,                        & !SLUCM
                              th_phy,            rho,          p_phy,        ust,            & !I multi-layer urban
                                 gmt,         julday,          xlong,       xlat,            & !I multi-layer urban
@@ -2057,6 +2058,9 @@ END  SUBROUTINE EQSMOISTURE
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  U_PHY     ! 3D U wind component [m/s]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  V_PHY     ! 3D V wind component [m/s]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  SWDOWN    ! solar down at surface [W m-2]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  SWDDIR    ! solar down at surface [W m-2]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  SWDDNI    ! solar down at surface [W m-2]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  SWDDIF    ! solar down at surface [W m-2]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  GLW       ! longwave down at surface [W m-2]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  P8W3D     ! 3D pressure, valid at interface [Pa]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  RAINBL    ! total input precipitation [mm]
@@ -2252,6 +2256,7 @@ END  SUBROUTINE EQSMOISTURE
      REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: lp_urb2d
      REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: lb_urb2d
      REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: hgt_urb2d
+     REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: acd_urb2d
      REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: mh_urb2d
      REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme ),                     INTENT(IN   ) :: stdh_urb2d
      REAL, OPTIONAL, DIMENSION( ims:ime, 4, jms:jme ),                  INTENT(IN   ) :: lf_urb2d
@@ -2600,7 +2605,7 @@ END DO
 
   CALL BEP_BEM( frc_urb2d,  utype_urb2d,    itimestep,         dz8w,       &
                        dt,        u_phy,        v_phy,                     &
-                   th_phy,          rho,        p_phy,       swdown,  glw, &
+                   th_phy,rho,p_phy,swdown,glw,swddir,swddni,swddif,       &
                       gmt,       julday,        xlong,         xlat,       &
                declin_urb,   cosz_urb2d,    omg_urb2d,                     &
          num_urban_layers, num_urban_hi,                                   &
@@ -2610,7 +2615,7 @@ END DO
               cm_ac_urb3d, sfvent_urb3d, lfvent_urb3d,                     &
              sfwin1_urb3d, sfwin2_urb3d,                                   &
                sfw1_urb3d,   sfw2_urb3d,    sfr_urb3d,    sfg_urb3d,       &
-                 lp_urb2d,     hi_urb2d,     lb_urb2d,    hgt_urb2d,       &
+                 lp_urb2d,     hi_urb2d,     lb_urb2d,    hgt_urb2d,acd_urb2d,  &
                   a_u_bep,      a_v_bep,      a_t_bep,                     &
                   a_e_bep,      b_u_bep,      b_v_bep,                     &
                   b_t_bep,      b_e_bep,      b_q_bep,      dlg_bep,       &
