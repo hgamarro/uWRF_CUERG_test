@@ -1,0 +1,60 @@
+## Define the Shell
+#!/bin/bash
+
+## Resource request, ppn:processors per node
+#PBS -l nodes=2:ppn=30
+
+## Job name that will appear in the job queue
+#PBS -N wrf_dominican
+
+## Direct the job standard output to be placed in the named file (e.g. model.list)
+#PBS -o wrf_dominican.out
+
+
+## PBS system send message emails when the job aborts(a), begins(b), or ends(e)
+#PBS -m abe
+
+## Email address used by PBS system to send messages
+#PBS -M jibsen@ccny.cuny.edu
+
+## Define the path of your wrf files
+home=/data/weather_forecast/wrf
+
+module load PGI/Compiler
+module load PGI/Openmpi_2.1.2
+module load PGI/netcdf4.1.3_jas1.9_jpeg1.2.5
+
+cd $home
+
+rm -r wrf.out
+rm -r wrfout_d0*
+rm -r wrfinput*
+rm -r wrfbdy_d01
+rm -r met_em.*
+rm -r rsl.*
+
+## Write the date when the script start
+date
+
+#link the met_em* files from ./wps to ./wrf folder
+ln -sf ../wps/met_em* .
+
+## Write the message in the output file
+echo Running real!
+
+## Execute the real.exe (point to your path real.exe)
+
+mpirun -np 60 -machinefile $PBS_NODEFILE /usr/local/WRF_WPS_3.7.1/WRFV3/run/real.exe
+
+## Write the message in the output file
+echo running wrf!
+
+## Execute the wrf.exe
+
+mpirun -np 60 -machinefile $PBS_NODEFILE /usr/local/WRF_WPS_3.7.1/WRFV3/run/wrf.exe
+
+## Write the date when the script end
+echo end wrf
+date
+
+

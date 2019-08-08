@@ -1,0 +1,29 @@
+#!/bin/sh
+#PBS -q production
+#PBS -N HW_MYJ
+#PBS -l select=128:ncpus=1
+#PBS -l place=free
+#PBS -j oe
+#PBS -m abe
+#PBS -M dmeleci00@citymail.cuny.edu
+#PBS -o wrf.out
+#PBS -V
+
+
+cd $PBS_O_WORKDIR
+date
+rm rsl.*
+echo 'Running real.exe'
+aprun -n 128 ./real.exe
+
+
+rm rsl.*
+/share/apps/ncar/default/bin/ncl pluto1km.ncl
+
+echo 'Running wrf.exe'
+aprun -n 128 ./wrf.exe
+
+echo 'Job is done!'
+
+date
+
